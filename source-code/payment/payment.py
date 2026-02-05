@@ -1,4 +1,3 @@
-import instana
 import os
 import sys
 import time

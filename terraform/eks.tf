@@ -80,9 +80,9 @@ resource "aws_eks_node_group" "main" {
   subnet_ids      = aws_subnet.private[*].id  # Worker nodes go in PRIVATE subnets
 
   scaling_config {
-    desired_size = 5
-    max_size     = 6
-    min_size     = 1
+    desired_size = 8
+    max_size     = 9
+    min_size     = 4
   }
 
   # Use t3.medium or start small with t3.small/micro 

@@ -10,4 +10,4 @@ WORKDIR /app
 COPY --from=builder /workspace/dispatch .
 USER roboshop
 EXPOSE 8080
-CMD [./dispatch]
+CMD ["./dispatch"]

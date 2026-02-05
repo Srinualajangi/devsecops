@@ -44,19 +44,26 @@ aws ecr get-login-password --region us-east-1 | docker login --username AWS --pa
 echo "[3/4] Backing up Running Images to Docker Hub ($DH_USER)..."
 
 # List of services to backup
+# ... (ECR Login must be successful first) ...
+
 SERVICES="cart payment shipping user catalogue dispatch frontend mongodb mysql rabbitmq redis"
 
 for SVC in $SERVICES; do
-    # Get current image from K8s
+    echo "Processing $SVC..."
+    
+    # Get image name from K8s
     CURRENT_IMG=$(kubectl get deployment $SVC -n roboshop -o jsonpath='{.spec.template.spec.containers[0].image}')
     
-    TARGET_IMG="$DH_USER/$SVC:$TAG"
+    # FIX: Pull the image first!
+    echo "Pulling $CURRENT_IMG..."
+    docker pull $CURRENT_IMG
     
-    echo "Backing up $SVC ($CURRENT_IMG) -> $TARGET_IMG"
+    # Tag and Push
+    TARGET_IMG="srinualajangi/$SVC:v2"
+    echo "Backing up to $TARGET_IMG..."
     docker tag $CURRENT_IMG $TARGET_IMG
     docker push $TARGET_IMG
 done
-
 # 4. PROMOTE PUBLIC IMAGES TO ECR
 echo "[4/4] Promoting Public Images to ECR..."
 

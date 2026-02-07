@@ -5,7 +5,7 @@ on:
     branches: [ main ]
     paths-ignore:
       - 'README.md'
-        #- 'helm/**'
+      # removed helm/** so helm changes trigger deployments
   workflow_dispatch:
 
 permissions:
@@ -62,7 +62,7 @@ jobs:
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-    # 4. DEPLOY TO DEV
+    # 4. DEPLOY TO DEV (With Dynamic Frontend LoadBalancer Logic)
     - name: Update KubeConfig
       run: aws eks update-kubeconfig --name roboshop-cluster --region us-east-1
 
@@ -72,9 +72,18 @@ jobs:
         ECR_REPOSITORY: roboshop-${{ matrix.service }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
+        # Default Logic
+        EXTRA_PARAMS=""
+        
+        # Frontend-Specific Logic (Expose Publicly)
+        if [ "${{ matrix.service }}" == "frontend" ]; then
+          EXTRA_PARAMS="--set service.type=LoadBalancer"
+        fi
+
         helm upgrade --install ${{ matrix.service }} helm/common \
           -f helm/values-dev.yaml \
           --set component=${{ matrix.service }} \
           --set image.repository=$ECR_REGISTRY/$ECR_REPOSITORY \
           --set image.tag=$IMAGE_TAG \
+          $EXTRA_PARAMS \
           -n roboshop-dev

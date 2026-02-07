@@ -49,6 +49,7 @@ jobs:
         args: >
           -Dsonar.organization=srinualajangi
           -Dsonar.projectKey=srinualajangi_devsecops
+          -Dsonar.branch.name=main
 
     # 3. AUTHENTICATION
     - name: Configure AWS Credentials

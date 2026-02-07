@@ -7,5 +7,5 @@ spec:
   selector:
     app: {{ .Values.component }}
   ports:
-  - port: {{ .Values.appPort }}
+  - port: {{ .Values.servic.port }}
     targetPort: {{ .Values.appPort }}

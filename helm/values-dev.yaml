@@ -1,0 +1,8 @@
+component: cart
+appPort: 8080
+image:
+  repository: public.ecr.aws/w8x9o2k9/roboshop-cart
+  tag: latest
+service:
+  type: ClusterIP
+  port: 80

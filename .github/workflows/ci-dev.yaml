@@ -1,0 +1,93 @@
+name: "Roboshop CI (Dev)"
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - 'helm/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy-dev:
+    name: Build & Deploy ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [cart, payment, dispatch, user, catalogue, shipping, frontend]
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # 1. SCA SCAN (Trivy - Vulnerabilities)
+    - name: Trivy Container Scan
+      uses: aquasecurity/trivy-action@master
+      continue-on-error: true
+      with:
+        scan-type: 'fs'
+        scan-ref: 'source-code/${{ matrix.service }}'
+        format: 'table'
+        exit-code: '1'
+        ignore-unfixed: true
+        severity: 'CRITICAL,HIGH'
+
+    # 2. SAST SCAN (SonarCloud - Code Quality)
+    # UNCOMMENT THIS BLOCK AFTER ADDING SONAR_TOKEN
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@master
+      continue-on-error: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        projectBaseDir: source-code/${{ matrix.service }}
+        args: >
+          -Dsonar.organization=srinualajangi
+          -Dsonar.projectKey=srinualajangi_devsecops
+
+    # 3. AUTHENTICATION
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    # 4. BUILD & PUSH
+    - name: Build and Push Docker Image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: roboshop-${{ matrix.service }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        cd source-code/${{ matrix.service }}
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+    # 5. DEPLOY TO DEV (Helm)
+    - name: Update KubeConfig
+      run: aws eks update-kubeconfig --name roboshop-cluster --region us-east-1
+
+    - name: Deploy to Dev (Helm)
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: roboshop-${{ matrix.service }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        helm upgrade --install ${{ matrix.service }} helm/common \
+          -f helm/values-dev.yaml \
+          --set component=${{ matrix.service }} \
+          --set image.repository=$ECR_REGISTRY/$ECR_REPOSITORY \
+          --set image.tag=$IMAGE_TAG \
+          -n roboshop-dev

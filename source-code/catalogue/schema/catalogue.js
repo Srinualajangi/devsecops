@@ -1,5 +1,7 @@
+//
+// Products
+//
 db = db.getSiblingDB('catalogue');
-db.products.drop();
 db.products.insertMany([
     {sku: 'HAL-1', name: 'HAL', description: 'Sorry Dave, I cant do that', price: 2001, instock: 2, categories: ['Artificial Intelligence']},
     {sku: 'PB-1', name: 'Positronic Brain', description: 'Highly advanced sentient processing unit with the laws of robotics burned in', price: 200, instock: 0, categories: ['Artificial Intelligence']},
@@ -13,5 +15,16 @@ db.products.insertMany([
     {sku: 'STAN-1', name: 'Stan', description: 'APM guru', price: 67, instock: 1000, categories: ['Robot', 'Artificial Intelligence']},
     {sku: 'STNG', name: 'Mr Data', description: 'Could be R. Daneel Olivaw? Protype positronic brain android', price: 1000, instock: 0, categories: ['Robot']}
 ]);
-db.products.createIndex({ name: "text", description: "text" });
-db.products.createIndex({ sku: 1 }, { unique: true });
+
+// full text index for searching
+db.products.createIndex({
+    name: "text",
+    description: "text"
+});
+
+// unique index for product sku
+db.products.createIndex(
+    { sku: 1 },
+    { unique: true }
+);
+

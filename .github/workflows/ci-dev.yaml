@@ -77,7 +77,7 @@ jobs:
         
         # Frontend-Specific Logic (Expose Publicly)
         if [ "${{ matrix.service }}" == "frontend" ]; then
-          EXTRA_PARAMS="--set service.type=LoadBalancer"
+          EXTRA_PARAMS="--set service.type=LoadBalancer --set service.port=80"
         fi
 
         helm upgrade --install ${{ matrix.service }} helm/common \

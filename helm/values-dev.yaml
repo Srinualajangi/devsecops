@@ -6,3 +6,25 @@ image:
 service:
   type: ClusterIP
   port: 80
+
+# Environment Variables for Services
+env:
+  catalogue:
+    MONGO: "true"
+    MONGO_URL: "mongodb://mongodb:27017/catalogue"
+  user:
+    MONGO: "true"
+    REDIS_HOST: "redis"
+    MONGO_URL: "mongodb://mongodb:27017/users"
+  cart:
+    REDIS_HOST: "redis"
+    CATALOGUE_HOST: "catalogue"
+  shipping:
+    CART_ENDPOINT: "cart:8080"
+    DB_HOST: "mysql"
+  payment:
+    CART_HOST: "cart"
+    USER_HOST: "user"
+    AMQP_HOST: "rabbitmq"
+    AMQP_USER: "roboshop"
+    AMQP_PASS: "roboshop123"

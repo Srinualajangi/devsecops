@@ -20,10 +20,11 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: {{ .Values.appPort }}
-        {{- if .Values.env }}
         env:
-          {{- range $key, $value := .Values.env }}
+          {{- $component := .Values.component }}
+          {{- if hasKey .Values.env $component }}
+          {{- range $key, $value := index .Values.env $component }}
           - name: {{ $key }}
             value: {{ $value | quote }}
           {{- end }}
-        {{- end }}
+          {{- end }}

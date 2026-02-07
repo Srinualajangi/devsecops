@@ -87,3 +87,4 @@ jobs:
           --set image.tag=$IMAGE_TAG \
           $EXTRA_PARAMS \
           -n roboshop-dev
+# Trigger CI

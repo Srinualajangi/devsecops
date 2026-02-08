@@ -19,8 +19,9 @@ env:
   cart:
     REDIS_HOST: "redis"
     CATALOGUE_HOST: "catalogue"
+    CATALOGUE_PORT: "80"
   shipping:
-    CART_ENDPOINT: "cart:8080"
+    CART_ENDPOINT: "cart:80"
     DB_HOST: "mysql"
   payment:
     CART_HOST: "cart"
